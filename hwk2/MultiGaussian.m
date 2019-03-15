@@ -1,4 +1,4 @@
-function [PC1, PC2, mu1, mu2, S1, S2, err] = MultiGaussian(training_data,...
+function [PC1, PC2, mu1, mu2, var1, var2, err] = MultiGaussian(training_data,...
     testing_data, model_number)
 %MultiGaussian
 %   training_data: data to train the discriminant values on
@@ -34,15 +34,21 @@ x2 = train_c2{:,1:d};
 if model_number==1
     S1 = cov(x1);
     S2 = cov(x2);
+    var1=S1;
+    var2=S2;
 elseif model_number==2
-    S = cov(x);
+    S = (cov(x1)+cov(x2))/2;
     S1 = S;
     S2 = S;
+    var1=S;
+    var2=S;
 elseif model_number==3
-    a1 = var(reshape(x1,1,[]));
+    a1 = trace((x1-mu1)*(x1-mu1)')/(N1*d);
     S1 = a1*eye(d);
-    a2 = var(reshape(x2,1,[]));
+    a2 = trace((x2-mu2)*(x2-mu2)')/(N2*d);
     S2 = a2*eye(d);
+    var1=a1;
+    var2=a2;
 end
 
 %% Test Data
@@ -52,7 +58,7 @@ Nt = size(xt,1);
 g1 = zeros(1,N);
 g2 = zeros(1,N);
 % Model 1 and 3 have the same discriminant
-if model_number==1 || model_number==3
+if model_number==1
     for t=1:N
         g1(t) = log(PC1)-d/2*log(2*pi)-0.5*log(det(S1))-0.5*(xt(t,:)-mu1)*inv(S1)*(xt(t,:)-mu1)';
         g2(t) = log(PC2)-d/2*log(2*pi)-0.5*log(det(S2))-0.5*(xt(t,:)-mu2)*inv(S2)*(xt(t,:)-mu2)';
@@ -61,6 +67,11 @@ elseif model_number==2
     for t=1:N
         g1(t) = log(PC1)-0.5*(xt(t,:)-mu1)*inv(S)*(xt(t,:)-mu1)';
         g2(t) = log(PC2)-0.5*(xt(t,:)-mu2)*inv(S)*(xt(t,:)-mu2)';
+    end
+elseif model_number==3
+    for t=1:N
+        g1(t) = log(PC1)-d/2*log(2*pi)-0.5*d*log(a1)-0.5*(xt(t,:)-mu1)*(xt(t,:)-mu1)'/a1;
+        g2(t) = log(PC2)-d/2*log(2*pi)-0.5*d*log(a2)-0.5*(xt(t,:)-mu2)*(xt(t,:)-mu2)'/a2;
     end
 end
 

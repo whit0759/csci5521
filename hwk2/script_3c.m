@@ -26,7 +26,7 @@ for K=[10, 50, 100]
     
     xhat = transpose(PC(:,1:K)*zt');
     
-    figure(n);
+    figure(K);
     
     for n=1:5
         subplot(2,5,n); 
